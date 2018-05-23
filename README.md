@@ -31,7 +31,7 @@ Just enable the plugin with the following command:
 ```bash
 rabbitmq-plugins enable rabbitmq_connection_mower
 ```
-If configured `scheduled` operation, the plugin will periodically, after every `mowing_interval`, search for reported idle channels within the broker and terminate the parent connections of those exceeding the preconfigured `channel_max_idle_t`. The plugin may also also be manually executed, to forcefully initiate mowing of idle connections from the broker.
+If configured for `scheduled` operation, the plugin will periodically, after every `mowing_interval`, search for reported idle channels within the broker and terminate the parent connections of those exceeding the preconfigured `channel_max_idle_t`. The plugin may also be manually executed, to forcefully initiate mowing of idle connections from the broker.
 
 ## Limitations ##
 

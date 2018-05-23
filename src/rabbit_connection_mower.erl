@@ -79,7 +79,7 @@ init(_Args) ->
     State = #state{scheduled = Scheduled,
                    mowing_interval = I} = set_config(#state{}),
     {ok, {TRef, Ref}} = if Scheduled -> schedule_next_mow(I);
-                            true     -> {ok, void}
+                            true     -> {ok, {undefined, undefined}}
                         end,
     {ok, validate(State#state{ref = Ref, t_ref = TRef, scheduled = Scheduled})}.
 
