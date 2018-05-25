@@ -13,7 +13,7 @@ An example is in the [Internet of Things](https://en.wikipedia.org/wiki/Internet
 
 ## Supported RabbitMQ Versions
 
-This plugin targets RabbitMQ 3.6.7 and later versions.
+This plugin targets **RabbitMQ 3.6.7** and later versions.
 
 ## Installation
 
@@ -54,7 +54,7 @@ The following is a summary of the configuration parameter descriptions, types an
 
 ## Usage ##
 
-Just enable the plugin with the following command:
+Once installed, i.e. `rabbitmq_connection_mower-<VERSION>.ez` file available in the `<RABBITMQ-HOME-DIR>/plugins/` directory, enable the plugin with the following command:
 
 ```
 rabbitmq-plugins enable rabbitmq_connection_mower
