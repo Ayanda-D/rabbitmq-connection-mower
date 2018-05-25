@@ -72,7 +72,7 @@ rabbitmqctl eval 'rabbit_connection_mower:mow(30000).'
 
 ## Limitations ##
 
-The plugin is intended for idle, non-multiplexed AMQP connections. i.e. only connections with single channels may be closed when idle for periods of time exceeding `channel_max_idle_t`. Multiplexed connections may reflect inaccuracies on the instantaneous measurements on the idleness of channels, and subsequently, the connections.
+The plugin is intended for idle, non-multiplexed AMQP connections. i.e. only connections with single channels may be closed when idle for periods of time exceeding `channel_max_idle_t`. Multiplexed connections may reflect inaccuracies on the aggregate instantaneous measurements carried out for the idleness of channels, and subsequently, the parent connections.
 
 ## LICENSE ##
 
