@@ -17,8 +17,6 @@
 -module(rabbit_connection_mower_SUITE).
 
 -include_lib("common_test/include/ct.hrl").
--include_lib("eunit/include/eunit.hrl").
--include_lib("amqp_client/include/amqp_client.hrl").
 -include("rabbit_connection_mower.hrl").
 
 -compile(export_all).
@@ -32,7 +30,9 @@ groups() ->
     [
       {non_parallel_tests, [], [
           successful_idle_connection_mowering,
-          unsuccessful_idle_connection_mowering
+          unsuccessful_idle_connection_mowering_expiry
+          %% TODO: add more test scenarios...
+          %% e.g. unsuccessful_idle_connection_mowering_channel_bandwidth
         ]}
     ].
 
@@ -61,7 +61,10 @@ end_per_group(_, Config) ->
     Config.
 
 init_per_testcase(Testcase, Config) ->
-    rabbit_ct_helpers:testcase_started(Config, Testcase).
+    rabbit_ct_helpers:testcase_started(Config, Testcase),
+    ok = rabbit_ct_broker_helpers:rpc(Config, 0,
+      application, stop, [rabbitmq_connection_mower]),
+    Config.
 
 end_per_testcase(Testcase, Config) ->
     rabbit_ct_helpers:testcase_finished(Config, Testcase).
@@ -70,7 +73,7 @@ end_per_testcase(Testcase, Config) ->
 %% Test Cases
 %% -----------
 successful_idle_connection_mowering(Config) ->
-    ok = setup_connection_mower(Config, 0, 100, 1000),
+    ok = setup_connection_mower(Config, 0, 120, 100),
     {ok, Ch} = init_connection_and_channel(Config, 0),
     1 = connections_count(Config, 0),
     enforce_idle_since_stat(Config, 0, Ch),
@@ -78,8 +81,8 @@ successful_idle_connection_mowering(Config) ->
     0 = connections_count(Config, 0),
     passed.
 
-unsuccessful_idle_connection_mowering(Config) ->
-    ok = setup_connection_mower(Config, 0, 100, 1000),
+unsuccessful_idle_connection_mowering_expiry(Config) ->
+    ok = setup_connection_mower(Config, 0, 120, 100),
     {ok, Ch} = init_connection_and_channel(Config, 0),
     1 = connections_count(Config, 0),
     enforce_idle_since_stat(Config, 0, Ch),
@@ -105,6 +108,11 @@ init_connection_mower_remote(IDLE_TTL, Interval) ->
   application:set_env(rabbitmq_connection_mower, log_level, high),
 
   ok = application:start(rabbitmq_connection_mower).
+
+get_env(Config, Node, Env) ->
+  {ok, Val} = rabbit_ct_broker_helpers:rpc(Config, Node,
+         application, get_env, [rabbitmq_connection_mower, Env]),
+  Val.
 
 enforce_idle_since_stat(Config, Node, Ch) ->
   ok = rabbit_ct_broker_helpers:rpc(Config, Node,

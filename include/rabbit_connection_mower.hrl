@@ -27,8 +27,8 @@
 -define(RABBIT_CONNECTION_CLOSE(C, M), rabbit_networking:close_connection(C, M)).
 -define(TO_INTEGER(I),                 rabbit_data_coercion:to_integer(I)).
 
--define(MSG_PREFIX,     "Connection Mower Plugin ").
--define(ERR(MSG, A),    error_logger:error_msg(?MSG_PREFIX ++ "error: " ++ MSG, A)).
--define(WARN(MSG, A),   error_logger:warning_msg(?MSG_PREFIX ++ "warning: " ++ MSG, A)).
+-define(MSG_PREFIX,     "Connection Mower ").
+-define(ERR(MSG, A),    error_logger:error_msg(?MSG_PREFIX ++ ": " ++ MSG, A)).
+-define(WARN(MSG, A),   error_logger:warning_msg(?MSG_PREFIX ++ ": " ++ MSG, A)).
 -define(ERR(MSG),       ?ERR(MSG,  [])).
 -define(WARN(MSG),      ?WARN(MSG, [])).

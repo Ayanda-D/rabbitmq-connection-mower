@@ -4,16 +4,11 @@ PROJECT_MOD = rabbit_connection_mower_app
 
 define PROJECT_ENV
 [
-  {channel_max_idle_t,  5000},
+  {channel_max_idle_t,  60000},
   {scheduled,           true},
-  {mowing_interval,     2000},
+  {mowing_interval,     30000},
   {log_level,           high}
      ]
-  }
-endef
-
-define PROJECT_APP_EXTRA_KEYS
-	{broker_version_requirements, ["3.7.0"]}
 endef
 
 DEPS = rabbit_common rabbit

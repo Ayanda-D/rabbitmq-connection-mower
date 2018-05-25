@@ -1,6 +1,7 @@
 .sw?
 .*.sw?
 *.beam
+.DS_Store
 .erlang.mk/
 /cover/
 /deps/

@@ -20,7 +20,7 @@
 
 -include_lib("rabbit_connection_mower.hrl").
 
--export([start_link/0, mow/0, stop_mowing/0, stop_mowing/1, stop/0]).
+-export([start_link/0, mow/0, mow/1, stop_mowing/0, stop_mowing/1, stop/0]).
 
 -export([mow_idle_connections/0,
          mow_idle_connections/1,
@@ -28,6 +28,18 @@
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
+
+% ------------------------------------------------------------
+-spec start_link()       -> rabbit_types:ok_pid_or_error().
+-spec mow()              -> rabbit_types:ok_pid_or_error().
+-spec mow(integer())     -> rabbit_types:ok_pid_or_error().
+-spec stop_mowing()      -> 'ok'.
+-spec stop_mowing(pid()) -> 'ok'.
+-spec stop()             -> 'ok'.
+-spec mow_idle_connections()                  -> 'ok'.
+-spec mow_idle_connections(integer())         -> 'ok'.
+-spec mow_idle_connections(integer(), atom()) -> 'ok'.
+% ------------------------------------------------------------
 
 -define(MOWER,  ?MODULE).
 
@@ -39,7 +51,7 @@
                  scheduled,             %% operation mode, 'true | false'
                  t_ref,                 %% next scheduled timer ref
                  monitors        = [],  %% monitors of internal mowing procs
-                 internal_mowers = []   %% internal mowing pids 
+                 internal_mowers = []   %% internal mowing pids
                 }).
 
 % ----
@@ -50,6 +62,9 @@ start_link() ->
 
 mow() ->
     gen_server:call(?MOWER, mow).
+
+mow(IDLE_TTL) ->
+    gen_server:call(?MOWER, {mow, IDLE_TTL}).
 
 stop_mowing() ->
     gen_server:call(?MOWER, stop_mowing).
@@ -90,10 +105,15 @@ handle_call(mow, _From, State = #state{channel_max_idle_t = IDLE_TTL,
     MRef = erlang:monitor(process, MPid),
     {reply, {ok, MPid}, State#state{internal_mowers = [MPid | MPids],
                                     monitors        = [MRef | MRefs]}};
+handle_call({mow, IDLE_TTL}, _From, State = #state{monitors         = MRefs,
+                                                   internal_mowers  = MPids}) ->
+    MPid = spawn(fun() -> mow_idle_connections(IDLE_TTL) end),
+    MRef = erlang:monitor(process, MPid),
+    {reply, {ok, MPid}, State#state{internal_mowers = [MPid | MPids],
+                                    monitors        = [MRef | MRefs]}};
 handle_call(stop_mowing, _From, State = #state{t_ref           = TRef,
                                                internal_mowers = MPids}) ->
-    timer:cancel(TRef),
-    [exit(MPid, normal) || MPid <- MPids],
+    stop_internal(TRef, MPids),
     %% State updated/cleared on reception of 'DOWN' messages...
     {reply, ok, State#state{t_ref = undefined}};
 handle_call({stop_mowing, MPid}, _From, State) ->
@@ -121,7 +141,7 @@ handle_info({'DOWN', MRef, process, MPid, _Reason},
     {MRefs, MPids} =
         case {lists:member(MRef, MRefs0), lists:member(MPid, MPids0)} of
              {true, true} ->
-                  {MRefs0 -- MRef, MPids0 -- MPid};
+                  {MRefs0 -- [MRef], MPids0 -- [MPid]};
              _ ->
                   {MRefs0, MPids0}
         end,
@@ -130,8 +150,8 @@ handle_info({'DOWN', MRef, process, MPid, _Reason},
 handle_info(_Info, State) ->
     {noreply, State}.
 
-terminate(_Reason, _State) ->
-    ok = stop_mowing().
+terminate(_Reason, _State = #state{t_ref = TRef, internal_mowers = MPids}) ->
+    ok = stop_internal(TRef, MPids).
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
@@ -159,6 +179,11 @@ mow_idle_connections(Ch, IDLE_TTL, LogLevel) when is_pid(Ch) ->
             end
     end.
 
+stop_internal(TRef, MPids) ->
+    timer:cancel(TRef),
+    [exit(MPid, normal) || MPid <- MPids],
+    ok.
+
 maybe_terminate(Conn, LogLevel) ->
     %% if 'channel_aggregate' =< MAX_CHANNEL_CUTOFF_AGGREGATE,
     %% terminate an elapsed idle connection. Current cutoff aggregate=1
@@ -167,7 +192,8 @@ maybe_terminate(Conn, LogLevel) ->
         ?RABBIT_CONNECTION_INFO(Conn, [channels])
     of
         [{channels, ChN}] when ChN =< ?MAX_CHANNEL_CUTOFF_AGGREGATE ->
-            ok = ?RABBIT_CONNECTION_CLOSE(Conn, ?WARN("idle connection closed"));
+            ok = ?RABBIT_CONNECTION_CLOSE(Conn,
+                    ?MSG_PREFIX ++ "closed idle connection");
         [{channels, ChN}] ->
             if LogLevel == high ->
                   ?WARN("connection termination forbidden. ~p active channels "
