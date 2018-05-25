@@ -30,7 +30,7 @@ Upon cloning the plugin, execute `make tests` to trigger a test run. View test r
 
 ## Configuration
 
-The Connection Mower plugin is configured in the `rabbitmq.config` or `advanced.config` files for RabbitMQ versions 3.6.x and/or 3.7.x respectively, as follows:
+The Connection Mower plugin is configured in the `rabbitmq.config` or `advanced.config` files for RabbitMQ versions `3.6.x` and/or `3.7.x` respectively, as follows:
 
 ```
 [{rabbitmq_connection_mower,
@@ -48,7 +48,7 @@ The following is a summary of the configuration parameter descriptions, types an
 | PARAMETER NAME  | DESCRIPTION  | TYPE  |  DEFAULT |
 |---|---|---|---|
 | channel\_max\_idle_t  | Maximum allowed idle period (in milliseconds) for a channel/connection to be considered inactive to be mowed/terminated | Integer | 60000 |  
-| scheduled | Mode of operation of the plugin. In scheduled operation, the plugin will periodically check for idle connections, and mow the off, if any | Boolean | true |
+| scheduled | Mode of operation of the plugin. In scheduled operation, the plugin will periodically check for idle connections, and mow connections off, if any | Boolean | true |
 | mowing\_interval | Time period (in milliseconds) after which the plugin will execute/engage into the connection mowing cycle | Integer | 30000 |
 | log\_level | Flag (`high` or `low`) indicating level of operational detail the plugin will log during its operation cycles | Atom | low  |
 
@@ -59,12 +59,12 @@ Just enable the plugin with the following command:
 ```
 rabbitmq-plugins enable rabbitmq_connection_mower
 ```
-If configured for `scheduled` operation, the plugin will periodically, after every `mowing_interval`, search for reported idle channels within the broker and terminate the parent connections of those exceeding the preconfigured `channel_max_idle_t`. The plugin may also be manually executed, to forcefully initiate mowing of idle connections from the broker.
+If configured for **scheduled** operation, the plugin will periodically, after every **mowing_interval**, search for reported idle channels within the broker and terminate the parent connections of those exceeding the preconfigured **channel\_max\_idle_t**. The plugin may also be manually executed, to forcefully initiate mowing of idle connections from the broker.
 
 ```
 rabbitmqctl eval 'rabbit_connection_mower:mow().'
 ```
-or, passing a custom `channel_max_idle_t` period.
+or, passing a custom **channel\_max\_idle_t** period.
 
 ```
 rabbitmqctl eval 'rabbit_connection_mower:mow(30000).'
