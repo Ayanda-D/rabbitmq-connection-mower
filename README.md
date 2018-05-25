@@ -39,7 +39,6 @@ The Connection Mower plugin is configured in the `rabbitmq.config` or `advanced.
       {mowing_interval,        30000},
       {log_level,              low}]
  }].
-
 ```
 
 The following is a summary of the configuration parameter descriptions, types and defaults.
