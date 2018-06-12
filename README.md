@@ -1,5 +1,7 @@
 # RabbitMQ Connection Mower Plugin
 
+[![Build Status](https://travis-ci.org/Ayanda-D/rabbitmq-connection-mower.svg?branch=master)](https://travis-ci.org/Ayanda-D/rabbitmq-connection-mower)
+
 Purpose of this plugin is to mow/cut/terminate connections which have been idle for periods of time exceeding the preconfigured maximum idle channel time. Not all RabbitMQ client libraries provide means of terminating idle connections, which can be resource heavy and make inefficient use of the broker if left unused over prolonged periods of time.
 
 <p style="text-align:center"><img src="./priv/images/lawn_mower.jpg" align="centre" height="220" width="850"></p>
