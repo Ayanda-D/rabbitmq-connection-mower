@@ -7,7 +7,7 @@ define PROJECT_ENV
   {channel_max_idle_t,  60000},
   {scheduled,           true},
   {mowing_interval,     30000},
-  {log_level,           high}
+  {log_level,           low}
      ]
 endef
 
