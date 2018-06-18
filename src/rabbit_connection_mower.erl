@@ -166,19 +166,26 @@ schedule_next_mow(Interval) ->
 
 mow_idle_connections('$end_of_table', _IDLE_TTL, _LogLevel) -> 'ok';
 mow_idle_connections(Ch, IDLE_TTL, LogLevel) when is_pid(Ch) ->
-    case rabbit_misc:pget(idle_since, get_stats(Ch)) of
-        undefined ->
-            void;
-        T ->
-            CurrentElapsedIdle = ts() - T,
-            case {CurrentElapsedIdle >= IDLE_TTL, get_conn(Ch)} of
-                {true, Conn} when is_pid(Conn) ->
-                    maybe_terminate(Conn, LogLevel);
-                _ ->
-                    void
-            end
-    end,
-    mow_idle_connections(ets:next(?CHANNEL_METRICS_TAB, Ch), IDLE_TTL, LogLevel).
+    try ets:next(?CHANNEL_METRICS_TAB, Ch) of
+        NextCh when is_pid(NextCh); NextCh =:= '$end_of_table' ->
+            case rabbit_misc:pget(idle_since, get_stats(Ch)) of
+                undefined ->
+                    void;
+                T ->
+                    CurrentElapsedIdle = ts() - T,
+                    case {CurrentElapsedIdle >= IDLE_TTL, get_conn(Ch)} of
+                        {true, Conn} when is_pid(Conn) ->
+                            maybe_terminate(Conn, LogLevel);
+                        _ ->
+                            void
+                    end
+            end,
+            mow_idle_connections(NextCh, IDLE_TTL, LogLevel)
+    catch
+        _:_ ->
+            ?WARN("channel ~p already terminated. Exiting mowing cycle", [Ch]),
+            ok
+    end.
 
 stop_internal(TRef, MPids) ->
     timer:cancel(TRef),
