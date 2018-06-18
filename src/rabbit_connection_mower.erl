@@ -106,8 +106,9 @@ handle_call(mow, _From, State = #state{channel_max_idle_t = IDLE_TTL,
     {reply, {ok, MPid}, State#state{internal_mowers = [MPid | MPids],
                                     monitors        = [MRef | MRefs]}};
 handle_call({mow, IDLE_TTL}, _From, State = #state{monitors         = MRefs,
-                                                   internal_mowers  = MPids}) ->
-    MPid = spawn(fun() -> mow_idle_connections(IDLE_TTL) end),
+                                                   internal_mowers  = MPids,
+                                                   log_level        = LogLevel}) ->
+    MPid = spawn(fun() -> mow_idle_connections(IDLE_TTL, LogLevel) end),
     MRef = erlang:monitor(process, MPid),
     {reply, {ok, MPid}, State#state{internal_mowers = [MPid | MPids],
                                     monitors        = [MRef | MRefs]}};
@@ -167,17 +168,17 @@ mow_idle_connections('$end_of_table', _IDLE_TTL, _LogLevel) -> 'ok';
 mow_idle_connections(Ch, IDLE_TTL, LogLevel) when is_pid(Ch) ->
     case rabbit_misc:pget(idle_since, get_stats(Ch)) of
         undefined ->
-            mow_idle_connections(ets:next(?CHANNEL_METRICS_TAB, Ch), IDLE_TTL);
+            void;
         T ->
             CurrentElapsedIdle = ts() - T,
             case {CurrentElapsedIdle >= IDLE_TTL, get_conn(Ch)} of
                 {true, Conn} when is_pid(Conn) ->
                     maybe_terminate(Conn, LogLevel);
                 _ ->
-                    mow_idle_connections(ets:next(?CHANNEL_METRICS_TAB, Ch),
-                        IDLE_TTL, LogLevel)
+                    void
             end
-    end.
+    end,
+    mow_idle_connections(ets:next(?CHANNEL_METRICS_TAB, Ch), IDLE_TTL, LogLevel).
 
 stop_internal(TRef, MPids) ->
     timer:cancel(TRef),

@@ -20,7 +20,7 @@
 -define(MAX_CHANNEL_CUTOFF_AGGREGATE,  1).
 -define(MIN_MOWING_INTERVAL,           1000).
 -define(DEFAULT_SCHEDULED,             true).
--define(DEFAULT_LOG_LEVEL,             high).
+-define(DEFAULT_LOG_LEVEL,             low).
 
 -define(RABBIT_CHANNEL_INFO(Ch, I),    rabbit_channel:info(Ch, I)).
 -define(RABBIT_CONNECTION_INFO(C, I),  rabbit_networking:connection_info(C, I)).
